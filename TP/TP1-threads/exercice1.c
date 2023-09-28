@@ -4,38 +4,31 @@
 pthread_mutex_t count_mutex = PTHREAD_MUTEX_INITIALIZER;
 long long count = 0;
 
-void increment_count() {
+long long incrementCount() {
   pthread_mutex_lock(&count_mutex);
-  count = count + 1;
+  long long c = ++count;
   pthread_mutex_unlock(&count_mutex);
+  return c;
 }
 
-long long get_count() {
-  pthread_mutex_lock(&count_mutex);
-  long long c = count;
-  pthread_mutex_unlock(&count_mutex);
-  return (c);
-}
-void* thread_funA(void* ignored) {
-  int i;
-  while ((i = get_count()) < 50000) {
-    if (i%10000==0) printf("A: i = %d\n", i);
-    increment_count();
-  }
+void *threadFunA(void *ignored) {
+  long long i;
+  while ((i = incrementCount()) < 50000)
+    if (i % 10000 == 0)
+      printf("A: i = %lld\n", i);
   return NULL;
 }
-void *thread_funB(void *ignored) {
-  int i;
-  while ((i = get_count()) < 100000) {
-    if (i % 10000 == 0) printf("B: i = %d\n", i);
-    increment_count();
-  }
+void *threadFunB(void *ignored) {
+  long long i;
+  while ((i = incrementCount()) < 100000)
+    if (i % 10000 == 0)
+      printf("B: i = %lld\n", i);
   return NULL;
 }
 int main(int argc, char **argv) {
-  pthread_t pthA, pthB;
-  pthread_create(&pthA, NULL, thread_funA, NULL);
-  pthread_create(&pthB, NULL, thread_funB, NULL);
-  pthread_join(pthA, NULL);
-  pthread_join(pthB, NULL);
+  pthread_t pth_a, pth_b;
+  pthread_create(&pth_a, NULL, threadFunA, NULL);
+  pthread_create(&pth_b, NULL, threadFunB, NULL);
+  pthread_join(pth_a, NULL);
+  pthread_join(pth_b, NULL);
 }
