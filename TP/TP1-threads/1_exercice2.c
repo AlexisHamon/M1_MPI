@@ -41,11 +41,11 @@ int main(int argc, char **argv) {
   pthread_t *pth_t = malloc(n * sizeof(pthread_t));
 
   for (int i = 0; i < n; ++i) {
-    struct thread_args *arg = malloc(sizeof(struct thread_args));
-    arg->i = i;
-    arg->sum = &sum;
-    arg->mutex = &sum_mutex;
-    pthread_create(&pth_t[i], NULL, threadFun, (void *)arg);
+    struct thread_args *args = malloc(sizeof(struct thread_args));
+    args->i = i;
+    args->sum = &sum;
+    args->mutex = &sum_mutex;
+    pthread_create(&pth_t[i], NULL, threadFun, (void *)args);
   }
   for (unsigned i = 0; i < n; ++i)
     pthread_join(pth_t[i], NULL);
