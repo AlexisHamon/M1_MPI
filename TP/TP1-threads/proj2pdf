@@ -1,0 +1,239 @@
+#! /bin/sh
+
+# This script "prints" the code of your project into a pdf file that can be annoted for comments by the profs
+#
+# The easiest to use this script is to call it from the main directory of your project, as follows:
+#    ../proj2pdf /tmp/TP4-myname.pdf
+# In this case, the script will attempt to find the relevant files to be included in your submission.
+#
+# If the script fail to detect the files to include, just specify them on the command line, as follows:
+#    ../proj2pdf /tmp/TP4-myname.pdf file1.c file2.c file1.h Makefile
+#
+# You must call it from the directory hosting your sources, as it will try to grab the git logs and the README.md file from there.
+
+
+##
+## Check the dependencies
+##
+if which uuencode >/dev/null ; then :
+else
+  echo "Please install uuencode (apt install sharutils || pacman -s sharutils)"
+  exit 1;
+fi
+if which pygmentize >/dev/null ; then :
+else
+  echo "Please install pygmentize (apt install python3-pygments || pacman -s python-pygments)"
+  exit 1;
+fi
+if which rsvg-convert >/dev/null ; then :
+else
+  echo "Please install rsvg-convert (apt install librsvg2-bin || pacman -s librsvg)"
+  exit 1;
+fi
+if which pandoc >/dev/null ; then :
+else
+  echo "Please install pandoc to include README.md files (apt install pandoc || pacman -s pandoc-cli)"
+  exit 1;
+fi    
+
+##
+## Check the parameters
+##
+usage() {
+  echo "Usage: proj2pdf output.pdf           # search/guess source files in current dir"
+  echo "Usage: proj2pdf output.pdf directory # search/guess source files in the specified dir (TODO: search of README.md may fail in this case)"
+  echo "Usage: proj2pdf output.pdf f1 f2 f3  # use the specified files"
+  exit 1
+}
+
+if [ $# -eq 0 ] ; then
+  echo "Please specify an output file name."
+  usage
+fi
+
+output=$1
+shift
+
+if echo $output | grep -q '.pdf$' ; then
+  :
+else
+  echo "Please provide a valid output file name (ending with .pdf)"
+  usage
+fi
+
+
+files="$@"
+dir="."
+previous_dir=$(pwd)
+if [ -d "$files" ] ; then # Given a directory
+  echo "Guessing the files in directory '$files'"
+  dir="$files"
+  cd $dir
+  files=`find -name Makefile -o -name CMakeLists.txt -o -name '*.[ch]' | grep -v '/CMakeFiles/'`  
+fi
+if [ -z "$files" ] ; then # no explicit parameters
+  echo "Guessing the files in the current dir"
+  files=`find -name Makefile -o -name CMakeLists.txt -o -name '*.[ch]' | grep -v '/CMakeFiles/'`
+fi
+echo "Input files: `echo $files|tr '\n' ' '`"
+
+echo 
+tempdir=`mktemp -d /tmp/proj2pdf-XXXXXXXX`
+
+echo "Installing a small mpi.h, in case your project needs it"
+# Regenerate the following chunk with:
+#     gzip -9 tools/mpi.h --stdout | uuencode --base64 -
+uudecode << 'INCLUDE_EOF' | gunzip > $tempdir/mpi.h
+begin-base64 644 -
+H4sICFKfEWUCA21waS5oAMVW23KjRhB95yu6dl8Uap01SL5s/CTL2FaVJFQg
+xetsbVEYxl4SBAozUsVJ5d8zF0A0IAvlUuHFVvfpnj6npxveh+Q5SghM52Pv
+ZrgYLh7nljdbTiYAYGjvK97R/dABE5nce9tZQB/ZxrMFDJBlYs/u4KxhUvZz
+nHB8N7Nu1FEXyLOcVX2X7T5Vz6dWJxin7UGyDMPY78wRmPrtxB4uwMDcb+zl
+9cQCo8m/dGEdHiQbA4sw8q5tewLGRV3XS4+feFm3GufC/Klu7pvcbJ7WzecD
+Ya6xzXObmOL148ICs9+AygPNQcOuTjxr2NWRdY5SQG9kT+cT6zOYFzW30mvn
+v6z5K6LuQFiEobiKfayAfXvrWtyKBZhcQx9zX3JLv9lwebv7Le2V9rOWy6A8
+582xUQ5M25S2y323R4Vgkqa6iANM08yv28AAbJdXeWBqWE17OvUebGdyA/I5
+xe7p8DNUH6ydu5wiL9ZxOp4hb1+rBY9GluuWbsxiOHv0XHvpjCzpPDEa3sXw
+rgiteS3H8ezFveW0el2+6JYuXzc/WUVZ2kcdNP6vy3y2oZA+/UwC9j3AmEFE
+gX0jkCbxK2woyU62EY2eYpkKQp/5J5Rlm4BtMiJTLDj4XZBuEvYOniMShyLD
+3Bn/OFxYVyKDrOGOME+CgKXgBwGhFCJ+ogb6R429rgmvF1Ri+EPmhYiDZchV
++VOykRphG1cGG7ggtnOl/akiJMkrxVqwyMivG0JZTptWSygSOApyVcYI5gLU
+Br7JfTt0kK5WbcgRt+9Q6ZpkPovSpA1qr/OK51nKUuGlPwjcNo1CgNU68kiW
+pVkPpOE7DhaRoFZfRoJt7ike/Wnz/EGD+qOC8kfK3QKqkiyVOJSMppssOIhi
+/sueA4VWeVWr1R5M3ibOrugpFsIlSdhJhy4ydFQBpQp5TQcgrQo0BBDEWoaa
+v7htxwLxDaPt7i5vvuCsg+C6G6QPeyhIBM0C9Y+oZ3e+FL8yRjqfUvEX6/zg
+R6yHOlI0pJ1avndAV8nKrslh5lE9lKoYWFmfDs9xUWGjpGoOP3nt1agXGfN8
+9MvXPGWUhOS3I9PH8Z70Zb30QEZSz0nTFZFJo6RL1emG5bCCRMQXa/Wk/KAv
+X2sHeYGfBCSOSQi9IE0oq8YU5VWqr62XRHRb/tb97CVo9jj45meg68K7rY2k
+uFVe5ie/9OqXrDniaFZ0EdSWjEa/k6OTiSCZLEw3+dvNe2AR17+2UOXHoZ9l
+Eclqh2DMbZT4saykGT+M44yEm4DUdxHl+6l9L/MHQ8VK3wtFC4V3h6xoOxAt
+gD1bPIfZ6/xHut4Pauyo4pZxyi8+/5DI8vul9lHBV20c/qNtLwm72ksqqGAu
+g8SPtiBhV0GoR20Vbf/FklQmOSdlZRSZw4iuY3p0tW7gM/Y/qCdRacoOVrZH
+xQrzssIOgvxnVe+G0DlyAruOX7fZ6zJ4h6cOnSUJa93GEu0iloqX1xGrCH/X
+lRdPO7Rgyq5q/2i9YdblZTh4fHk/tK7bqynT9qiVjSrVKwPQES1no8PmflPY
+v/3i0CsrrCO6a8FvtuKNXsi3b+DzL8KjP2hb98Ff+KGVTwIUAAA=
+====
+INCLUDE_EOF
+
+##
+## Generate the svg files
+##
+
+echo "Generating svg files"
+# Git logs
+  echo "  git logs ->  $tempdir/00_summary.svg"
+  ( 
+    echo " # Included files:";
+    for c in $files ; do
+      if clang-format $c | cmp --quiet $c ; then
+        echo "  * "$(basename $c);
+      else 
+        echo "  * "$(basename $c)"   TODO: clang-format      .";
+      fi
+    done
+    printf "\n\n"
+    
+    echo " # Ignored C and H files"
+    for c in `find -name '*.[ch]'` ; do
+      if echo $files | grep --quiet $(basename $c) ; then
+        : # echo "  * (not) "$(basename $c)
+      else 
+        echo "  * "$(basename $c)
+      fi
+    done
+    
+    if git status >/dev/null 2>/dev/null ; then
+        printf "\n\n\n\n"
+        git log --stat
+    fi
+
+    printf "\n.\n"
+  ) | pygmentize  -O line_number_pad:12 -o $tempdir/00_summary.svg
+
+# Parse the README.md that must be there
+if [ -e README.md ] ; then 
+  echo "  README.md -> $tempdir/01_README.svg"
+  (pandoc -f markdown -t markdown README.md ; printf "\n.\n") | pygmentize -l markdown -o $tempdir/01_README.svg
+else
+  echo "Please include a README.md to your submission"
+  exit 1
+fi
+
+count=2 # To keep the file ordering while generating the SVGs. 0 is summary; 1 is README
+for file in $files ; do 
+  num=`printf "%02d" $count`
+  case "$file" in
+  *Makefile)
+    if grep -q "CMAKE generated file:" $file ; then
+      echo "Ignoring the Makefile that seems generated by CMake."
+      if echo "$files" | grep -q CMakeLists.txt ; then
+        echo "The CMakeLists.txt will be used instead"
+      else
+        echo "WARNING: the CMakeLists.txt seems to not be included."
+      fi
+    else
+      echo "  $file -> $tempdir/${num}_Makefile.svg"
+      (
+       sed 's/^/ /' $file
+       printf "\n\n\n#eof\n"
+      ) | pygmentize -l make -O line_number_pad:12 -o $tempdir/${num}_Makefile.svg
+    fi
+    ;;
+  *CMakeLists.txt)
+    echo "  $file -> $tempdir/${num}_CMakelists.svg"
+    (
+     echo " ## CMakeLists.txt"
+     echo
+     sed 's/^/ /' $file
+     printf "\n\n\n#eof\n"
+    ) | pygmentize -l cmake -O line_number_pad:12 -o $tempdir/${num}_CMakeLists.svg
+    ;;
+  *.[ch])
+    name=$(basename $file)
+    if which clang-tidy >/dev/null ; then :
+    else
+      echo "Please install clang-tidy (apt install clang-tidy || pacman -s clang)"
+      exit 1;
+    fi
+
+    echo "  $file -> $tempdir/${num}_${name}.svg"
+    (printf "\n\n/*\n ******************************************************\n ********* Fichier ${file} *********\n ******************************************************\n */\n";
+     cat $file
+     printf "\n\n/////////////////////////////// clang-tidy output\n\n"
+     clang-tidy $file -- -I.. -I. -I$tempdir
+    ) | pygmentize -l C -o "$tempdir/${num}_${name}.svg"
+    ;;
+  *.py)
+    name=$(basename $file)
+    echo "  $file -> $tempdir/${count}_${name}.svg"
+    (
+     sed 's/^/ /' $file
+     printf "\n\n\n#eof\n"
+    ) | pygmentize -l python -o "$tempdir/${count}_${name}.svg"
+    ;;
+  *.svg)
+    name=$(basename $file)
+    echo "  $file -> $tempdir/${count}_${name}.svg"
+    cp $file $tempdir/${count}_${name}.svg
+    ;;
+  *) 
+    echo "File $file not handled! Bailing out."
+    rm -rf $tempdir
+    exit 0
+    ;;
+  esac; 
+  count=$(expr $count + 1)
+done
+echo "done."
+
+rm $tempdir/mpi.h
+echo "Generating $output"
+rm -f $output
+rsvg-convert -f pdf -o $output $tempdir/*
+rm -rf $tempdir
+
+
+echo "\n\nGeneration done. Please check the content of $output before submitting it"
+exit 0
+	  
+	  
