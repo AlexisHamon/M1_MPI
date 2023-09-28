@@ -11,3 +11,12 @@ Même si le compteur s'incrémente deux fois par la suite, les deux threads vont
 
 Pour corriger le problème, il suffit de mettre l'obtention du compteur et son incrémentation dans la même section critique. C'est ce qui est fait dans le code en annexe dans la fonction `getCount()`.
 
+## Exercice 2: Écrire de petits programmes avec des threads
+
+En suivant les questions du sujet jusqu'à la question optionelle 6, on obtient le code en annexe.
+
+En évitant `pthread_exit()`, élimine le psuedo-mem leak de valgrind (bug connu).
+
+`atoi()` est préféré à `sscanf("%d", ...)` dans la lecture des arguments pour éviter de parser la chaîne de formattage.
+
+L'utilisation du mutex n'est nécessaire que lors de l'incrémentation de la somme partielle de chaque thread à la somme globale.
