@@ -2,3 +2,5 @@ CMakeFiles
 CMakeCache.txt
 Makefile
 *.cmake
+julia
+outfile.bmp
