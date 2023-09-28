@@ -2,6 +2,12 @@
 #include <stddef.h>
 #include <stdlib.h>
 
+int cpucount() {
+  cpu_set_t cpuset;
+  sched_getaffinity(0, sizeof(cpuset), &cpuset);
+  return CPU_COUNT(&cpuset);
+}
+
 int main(int argc, char **argv) {
    if (argc < 2)
     return 1;
