@@ -17,8 +17,14 @@ int main(int argc, char **argv) {
     perror("Cannot open outfile");
     exit(1);
   }
-  unsigned char *img = malloc(width * height * sizeof(unsigned char));
+  unsigned char *img = malloc(width * height * 3 * sizeof(unsigned char));
 
+  for (int y=0; y<height; ++y) {
+    for (int x=0; x<width; ++x) {
+      compute_julia_pixel(x, y, width, height, 1.0, &img[(y * width + x) * 3]);
+    }
+  }
+  
   write_bmp_header(out, width, height);
   fwrite(img, width * height * 3, 1, out);
   fclose(out);
