@@ -1,3 +1,6 @@
+# Sources for style check-style and tidy
+#https://gist.github.com/dtoma/61468552bbc7c0114b2e700f9247a310
+
 SOURCES = *.c
 SRC_DIR = .
 
