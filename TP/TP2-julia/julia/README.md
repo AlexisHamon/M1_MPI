@@ -12,3 +12,6 @@ Tant que le travail n'est pas fini `julia_it->i = 0`, chaque thread `threadCalc`
 récupérer les bornes de ce dernier grâce aux fonctions `juliaGetXmin`, `juliaGetXmax`, `juliaGetYmin` et `juliaGetYmax`.
 
 Toute l'image est alors parcourue via une attribution dynamique des pavés aux différents threads.
+
+Bien que l'affirmation de la question 5 est vraie, un autre facteur important est l'optimisation du cache propre à chaque machine.
+Le compromis souhaité se trouve valoir sur ma machine des pavés de taille 32. 
