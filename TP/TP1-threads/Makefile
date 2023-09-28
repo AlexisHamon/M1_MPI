@@ -42,7 +42,7 @@ tidy:
 	@echo "Done"
   
 proj2pdf: style check-style tidy
-	rm ./rendu.pdf
+	rm -f ./rendu.pdf
 	./proj2pdf rendu.pdf $(SOURCES)
 
 .PHONY: style check-style tidy
