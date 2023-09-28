@@ -1,7 +1,5 @@
 #define _GNU_SOURCE
 
-// #define ceild(n, d) (((n) < 0) ? -((-(n)) / (d)) : ((n) + (d)-1) / (d))
-#define ceild(n, d) (((n) + (d)-1) / (d))
 #define min(x, y) ((x) < (y) ? (x) : (y))
 
 #include "julia.h"
