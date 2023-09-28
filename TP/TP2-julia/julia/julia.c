@@ -1,5 +1,6 @@
 #include "julia.h"
-
+#include <stddef.h>
+#include <stdlib.h>
 
 int main(int argc, char** argv) {
    FILE *out=fopen("outfile.bmp","w");

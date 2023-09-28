@@ -1,3 +1,4 @@
+#include <stdio.h>
 
 /* Constants defining the view to render */
 // "Zoom in" to a pleasing view of the Julia set
