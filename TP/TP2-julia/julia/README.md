@@ -3,12 +3,12 @@
 
 ## Exercice 1: La fractale de Julia
 
-#### Question 1:
+Nous nous retrouvons dans le cas classique du pavage d'un domaine sans vecteur de dépendance.
+On peut donc parraléliser à la volée comme bon nous le semble.
 
-#### Question 2: Implémentez un découpage 1D
+On définit une structure d'itérateur, `julia_it`, composée d'un mutex pour l'attribution des pavés.
 
-#### Question 3: Implémentez maintenant un découpage 2D
+Tant que le travail n'est pas fini `julia_it->i = 0`, chaque thread `threadCalc` va obtenir un numéro de pavé,
+récupérer les bornes de ce dernier grâce aux fonctions `juliaGetXmin`, `juliaGetXmax`, `juliaGetYmin` et `juliaGetYmax`.
 
-#### Question 4:
-
-#### Question 5:
+Toute l'image est alors parcourue via une attribution dynamique des pavés aux différents threads.
