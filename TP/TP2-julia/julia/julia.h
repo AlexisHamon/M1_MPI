@@ -1,3 +1,6 @@
+#ifndef JULIA_H
+#define JULIA_H
+
 #include <stdio.h>
 
 /* Constants defining the view to render */
@@ -14,3 +17,5 @@
 /* Prototypes of the provided functions -- see each file for the functions' documentation */
 int compute_julia_pixel(int x, int y, int width, int height, float tint_bias, unsigned char *rgb);
 int write_bmp_header(FILE *f, int width, int height);
+
+#endif
