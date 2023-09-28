@@ -1,6 +1,7 @@
 #define _GNU_SOURCE
 
-#define ceild(n, d) (((n) < 0) ? -((-(n)) / (d)) : ((n) + (d)-1) / (d))
+// #define ceild(n, d) (((n) < 0) ? -((-(n)) / (d)) : ((n) + (d)-1) / (d))
+#define ceild(n, d) (((n) + (d)-1) / (d))
 #define min(x, y) ((x) < (y) ? (x) : (y))
 
 #include "julia.h"
@@ -8,6 +9,53 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <sched.h>
+
+struct julia_it {
+  // Those are constants between threads
+  int size_tile;
+  int n_tile_height;
+  // Those needs to be accessed threw a critical space
+  pthread_mutex_t mutex;
+  int i;
+};
+
+struct julia_it* juliaAlloc(int width, int height, int size_tile) {
+  struct julia_it* it = malloc(sizeof(struct julia_it));
+  it->size_tile = size_tile;
+  int n_tile_width = width / size_tile + 1;
+  it->n_tile_height = height / size_tile + 1;
+  pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+  it->mutex = mutex;
+  it->i = n_tile_width * it->n_tile_height;
+  return it;
+}
+
+int juliaGet(struct julia_it* it) {
+  pthread_mutex_lock(&it->mutex);
+  int i = (it->i ? (it->i--) : (0));
+  pthread_mutex_unlock(&it->mutex);
+  return i;
+}
+
+int juliaGetYmin(struct julia_it* it, int i) {
+  return ((i-1) % it->n_tile_height) * it->size_tile;
+}
+int juliaGetYmax(struct julia_it* it, int i) {
+  return (((i-1) % it->n_tile_height)+1) * it->size_tile;
+}
+
+int juliaGetXmin(struct julia_it* it, int i) {
+  return ((i-1) / it->n_tile_height) * it->size_tile;
+}
+int juliaGetXmax(struct julia_it* it, int i) {
+  return (((i-1) / it->n_tile_height)+1) * it->size_tile;
+}
+
+void juliaFree(struct julia_it* it) {
+  free(it);
+}
+
+
 
 int cpucount() {
   cpu_set_t cpuset;
@@ -23,20 +71,23 @@ struct img {
 
 struct thread_args {
   struct img *img;
-  int th;
-  int lby;
+  struct julia_it* it;
 };
 
 void *threadCalc(void *ptr) {
   struct thread_args *args = (struct thread_args *)ptr;
-  
-  for (int y=(args->th * args->lby); y<min(args->img->height, ((args->th+1) * args->lby)); ++y) {
-    for (int x=0; x<args->img->width; ++x) {
-      compute_julia_pixel(x, y, args->img->width, args->img->height, 1.0, &args->img->pixel[(y * args->img->width + x) * 3]);
+  int i;
+
+  while ((i = juliaGet(args->it))) {
+    int y_upb = min(args->img->height, juliaGetYmax(args->it, i));
+    int x_upb = min(args->img->width, juliaGetXmax(args->it, i));
+    for (int y=juliaGetYmin(args->it, i); y<y_upb; ++y) {
+      for (int x=juliaGetXmin(args->it, i); x<x_upb; ++x) {
+        compute_julia_pixel(x, y, args->img->width, args->img->height, 1.0, &args->img->pixel[(y * args->img->width + x) * 3]);
+      }
     }
   }
 
-  free(args);
   return NULL;
 }
 
@@ -61,19 +112,20 @@ int main(int argc, char **argv) {
 
   int cpu_count = cpucount();
 
-  int lby = ceild(img->height, cpu_count);
+  struct thread_args *args = malloc(sizeof(struct thread_args));
+  args->img = img;
+  args->it = juliaAlloc(img->width, img->height, 32);
+
   pthread_t *pth_t = malloc(cpu_count * sizeof(pthread_t));
 
-  for (int th=0; th<cpu_count; ++th) {
-    struct thread_args *args = malloc(sizeof(struct thread_args));
-    args->th = th;
-    args->lby = lby;
-    args->img = img;
+  for (int th=0; th<cpu_count; ++th)
     pthread_create(&pth_t[th], NULL, threadCalc, (void *)args);
-  }
   
   for (unsigned th = 0; th<cpu_count; ++th)
     pthread_join(pth_t[th], NULL);
+  
+  free(args->it);
+  free(args);
   free(pth_t);
 
   write_bmp_header(out, img->width, img->height);
