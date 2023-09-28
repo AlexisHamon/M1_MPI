@@ -4,3 +4,4 @@ Makefile
 *.cmake
 julia
 outfile.bmp
+vgcore*
