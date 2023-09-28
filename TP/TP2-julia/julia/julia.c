@@ -1,6 +1,8 @@
+#define _GNU_SOURCE
 #include "julia.h"
 #include <stddef.h>
 #include <stdlib.h>
+#include <sched.h>
 
 int cpucount() {
   cpu_set_t cpuset;
