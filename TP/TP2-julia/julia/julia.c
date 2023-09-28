@@ -115,7 +115,7 @@ int main(int argc, char **argv) {
 
   pthread_t *pth_t = malloc(cpu_count * sizeof(pthread_t));
 
-  for (int th = 0; th < cpu_count; ++th)
+  for (unsigned th = 0; th < cpu_count; ++th)
     pthread_create(&pth_t[th], NULL, threadCalc, (void *)args);
 
   for (unsigned th = 0; th < cpu_count; ++th)
