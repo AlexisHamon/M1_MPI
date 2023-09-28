@@ -1,4 +1,5 @@
 #include "julia.h"
+#include <math.h>
 
 /*
  * compute_julia_pixel(): compute RBG values of a pixel in a particular Julia set image.
